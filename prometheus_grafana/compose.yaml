@@ -1,0 +1,75 @@
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  data-loki:
+    driver: local
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+  
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+  
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro'
+  
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    # ports:
+    #   - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+  
+
+  loki:
+    image: grafana/loki:3.3.2
+    container_name: loki
+    command: '-config.file=/etc/loki/config.yaml'
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/config.yaml:ro
+      - data-loki:/loki:rw
+    restart: unless-stopped
+  
+  promtail:
+    image: grafana/promtail:3.3.2
+    container_name: promtail
+    command: '-config.file=/mnt/config/config.yaml'
+    volumes:
+      - ./promtail-config.yaml:/mnt/config/config.yaml:ro
+      - /var/log:/var/log:ro
+    restart: unless-stopped
