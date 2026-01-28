@@ -16,22 +16,27 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-# Example job for node_exporter
-  - job_name: 'node_exporter'
-    static_configs:
-      - targets: ['node_exporter:9100']
+# # Example job for node_exporter
+#   - job_name: 'node_exporter'
+#     static_configs:
+#       - targets: ['node_exporter:9100']
 
-# Example job for cadvisor
-  - job_name: 'cadvisor'
-    static_configs:
-      - targets: ['cadvisor:8080']
+# # Example job for cadvisor
+#   - job_name: 'cadvisor'
+#     static_configs:
+#       - targets: ['cadvisor:8080']
   
 # Example job for Loki
   - job_name: 'loki'
     static_configs:
       - targets: ['loki:3100']
 
-# Example job for Promtail
-  - job_name: 'promtail'
+# # Example job for Promtail
+#   - job_name: 'promtail'
+#     static_configs:
+#       - targets: ['promtail:9080']
+
+# Example job for Alloy
+  - job_name: 'alloy'
     static_configs:
-      - targets: ['promtail:9080']
+      - targets: ['alloy:12345']

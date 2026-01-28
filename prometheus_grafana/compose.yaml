@@ -5,6 +5,12 @@ volumes:
     driver: local
   data-loki:
     driver: local
+  alloy_data:
+    driver: local
+
+networks:
+  frontend:
+    external: true
 
 services:
   prometheus:
@@ -18,6 +24,7 @@ services:
     restart: unless-stopped
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-remote-write-receiver'
   
   grafana:
     image: grafana/grafana:latest
@@ -28,32 +35,6 @@ services:
       - grafana-data:/var/lib/grafana
     restart: unless-stopped
   
-  node_exporter:
-    image: quay.io/prometheus/node-exporter:latest
-    container_name: node_exporter
-    command:
-      - '--path.rootfs=/host'
-    network_mode: host
-    pid: host
-    restart: unless-stopped
-    volumes:
-      - '/:/host:ro'
-  
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: cadvisor
-    # ports:
-    #   - "8080:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    devices:
-      - /dev/kmsg
-  
-
   loki:
     image: grafana/loki:3.3.2
     container_name: loki
@@ -64,12 +45,67 @@ services:
       - ./loki-config.yaml:/etc/loki/config.yaml:ro
       - data-loki:/loki:rw
     restart: unless-stopped
-  
-  promtail:
-    image: grafana/promtail:3.3.2
-    container_name: promtail
-    command: '-config.file=/mnt/config/config.yaml'
+
+  alloy:
+    image: grafana/alloy:v1.9.1
+    container_name: alloy
+    hostname: srv-test-1
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    ports:
+      - "12345:12345"
     volumes:
-      - ./promtail-config.yaml:/mnt/config/config.yaml:ro
+      - ./alloy-config.alloy:/etc/alloy/config.alloy
+      - alloy_data:/var/lib/alloy/data
+      - /:/rootfs:ro
+      - /run:/run:ro
       - /var/log:/var/log:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /run/udev/data:/run/udev/data:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alloy.rule=Host(`alloy.prometheus-grafana`)"
+      - "traefik.http.routers.alloy.entrypoints=websecure"
+      - "traefik.http.routers.alloy.tls=true"
+      - "traefik.http.routers.alloy.certresolver=le"
+    networks:
+      - frontend
     restart: unless-stopped
+
+  # node_exporter:
+  #   image: quay.io/prometheus/node-exporter:latest
+  #   container_name: node_exporter
+  #   command:
+  #     - '--path.rootfs=/host'
+  #   network_mode: host
+  #   pid: host
+  #   restart: unless-stopped
+  #   volumes:
+  #     - '/:/host:ro'
+  
+  # cadvisor:
+  #   image: gcr.io/cadvisor/cadvisor:latest
+  #   container_name: cadvisor
+  #   # ports:
+  #   #   - "8080:8080"
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:ro
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker/:/var/lib/docker:ro
+  #     - /dev/disk/:/dev/disk:ro
+  #   devices:
+  #     - /dev/kmsg
+
+  # promtail:
+  #   image: grafana/promtail:3.3.2
+  #   container_name: promtail
+  #   command: '-config.file=/mnt/config/config.yaml'
+  #   volumes:
+  #     - ./promtail-config.yaml:/mnt/config/config.yaml:ro
+  #     - /var/log:/var/log:ro
+  #   restart: unless-stopped

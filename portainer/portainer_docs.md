@@ -6,12 +6,24 @@ creér un volume pour portainer:
 
 # Pour voir si le conteneur est lancer:
 ~ docker ps
-
 ip:9000
 
+~ docker stop portainer
+reset password:
+➜  ~ docker run --rm -v portainer_data:/data portainer/helper-reset-password
+Unable to find image 'portainer/helper-reset-password:latest' locally
+latest: Pulling from portainer/helper-reset-password
+ddb28a3a02c2: Pull complete 
+02b4906c8588: Pull complete 
+Digest: sha256:327a5580faf6a67e1eb98f4fac41bab14af7425ea88437b680945c995f1529e9
+Status: Downloaded newer image for portainer/helper-reset-password:latest
+{"level":"info","filename":"portainer.db","time":"2026-01-28T09:33:44Z","message":"loading PortainerDB"}
+2026/01/28 09:33:45 Password successfully updated for user: admin
+2026/01/28 09:33:45 Use the following password to login: 98woR7]{+h04Y<^qmyx6dPJ5/%1Hg:Wi
+~ docker start portainer
 
 ## grafana loki
-
+https://grafana.com/docs/alloy/latest/set-up/install/docker/
 installer le driver loki
 ~ docker plugin install grafana/loki-docker-driver:3.6.0-arm64 --alias loki --grant-all-permissions
 
